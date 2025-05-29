@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kemboard - Magical Learning Adventure! ✨</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One:wght@400&family=Comic+Neue:wght@400;700&display=swap');
+        
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: 'Comic Neue', cursive; 
+            background: linear-gradient(45deg, #ff9a9e, #fecfef, #fecfef, #a8edea, #fed6e3);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        canvas { 
+            display: block; 
+            cursor: crosshair; 
+        }
+
+        #game-info-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+            padding: 15px 0;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+        }
+
+        .info-display {
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px;
+            color: #fff;
+            background-color: rgba(0,0,0,0.3);
+            padding: 8px 16px;
+            border-radius: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        #instruction-container {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 600px; 
+            z-index: 40;
+        }
+
+        #instruction { 
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50; 
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.7), 0 0 15px rgba(255,255,255,0.4);
+            text-align: center;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.25); 
+            border-radius: 20px;
+            backdrop-filter: blur(8px); 
+            border: 2px solid rgba(255,255,255,0.35);
+            min-height: 40px;
+            display: block;
+        }
+
+        #challenge-progress {
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px;
+            color: #ff4081;
+            margin-top: 5px;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.7);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #challenge-progress.show { opacity: 1; }
+        
+        #mode-display, #score-display {
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px;
+            background-color: rgba(0,0,0,0.3);
+            padding: 8px 16px;
+            border-radius: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        #key-image {
+            font-size: 120px;
+            margin-top: 10px;
+            text-align: center;
+            color: #2c3e50;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.7);
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 15px;
+            width: 250px;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 5px;
+        }
+        #key-image .letter {
+            font-size: 60px;
+            font-weight: bold;
+        }
+        #key-image .emoji {
+            font-size: 160px;
+        }
+
+        #timer {
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px;
+            color: #fff;
+            background-color: rgba(0,0,0,0.3);
+            padding: 8px 16px;
+            border-radius: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        #gemini-tell-more-btn {
+            font-family: 'Fredoka One', cursive;
+            font-size: 16px;
+            padding: 8px 15px;
+            color: white;
+            background: linear-gradient(45deg, #ff758c, #ff7eb3);
+            border: none;
+            border-radius: 18px;
+            cursor: pointer;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none; 
+            transform: translateY(-5px);
+            margin-top: 5px;
+        }
+
+        #gemini-tell-more-btn.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        #gemini-tell-more-btn:hover { transform: translateY(-1px) scale(1.03); box-shadow: 0 4px 7px rgba(0,0,0,0.15); }
+        #gemini-tell-more-btn:active { transform: translateY(0px) scale(1); box-shadow: 0 2px 3px rgba(0,0,0,0.1); }
+
+        #welcome { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-family: 'Fredoka One', cursive; 
+            font-size: 50px; 
+            color: #ff4081; 
+            text-shadow: 4px 4px 8px rgba(255,255,255,0.8), 0 0 30px #ff4081;
+            text-align: center;
+            animation: bounce 2s ease-in-out infinite; 
+            background: rgba(255,255,255,0.15);
+            padding: 25px 35px;
+            border-radius: 30px;
+            backdrop-filter: blur(15px);
+            border: 3px solid rgba(255,255,255,0.4);
+            z-index: 100; 
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translate(-50%, -50%) translateY(0); }
+            40% { transform: translate(-50%, -50%) translateY(-20px); }
+            60% { transform: translate(-50%, -50%) translateY(-10px); }
+        }
+        
+        #control-panel {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 50;
+        }
+        
+        #sound-status {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .control-btn {
+            font-family: 'Fredoka One', cursive;
+            font-size: 14px;
+            padding: 8px 12px;
+            color: white;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .control-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 6px rgba(0,0,0,0.3); }
+        .control-btn:active { transform: translateY(0); }
+        
+        #mode-selector {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 50;
+        }
+        
+        .mode-btn {
+            font-family: 'Fredoka One', cursive;
+            font-size: 14px;
+            padding: 8px 12px;
+            color: white;
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            opacity: 0.8;
+        }
+        .mode-btn.active {
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+        .mode-btn:hover { transform: translateY(-1px); opacity: 1; }
+        
+        .floating-emoji { position: absolute; font-size: 30px; animation: float 6s ease-in-out infinite; pointer-events: none; z-index: -1; }
+        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-20px) rotate(10deg); } }
+        .sparkle { position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%; animation: sparkle 1.5s ease-in-out infinite; pointer-events: none; z-index: 10; }
+        @keyframes sparkle { 0%, 100% { opacity: 0; transform: scale(0); } 50% { opacity: 1; transform: scale(1); } }
+
+        #gemini-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        #gemini-modal.show { opacity: 1; pointer-events: auto; }
+        #gemini-modal-content { font-family: 'Comic Neue', cursive; background: linear-gradient(135deg, #fdfbfb, #ebedee); padding: 25px 35px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); text-align: center; max-width: 80%; width: 400px; color: #333; border: 2px solid rgba(255,255,255,0.7); transform: scale(0.9); transition: transform 0.3s ease; }
+        #gemini-modal.show #gemini-modal-content { transform: scale(1); }
+        #gemini-modal-title { font-family: 'Fredoka One', cursive; font-size: 24px; color: #e91e63; margin-top: 0; margin-bottom: 12px; }
+        #gemini-modal-text { font-size: 17px; line-height: 1.5; margin-bottom: 20px; min-height: 40px; }
+        #gemini-modal-close-btn { font-family: 'Fredoka One', cursive; font-size: 15px; padding: 8px 20px; color: white; background: #673ab7; border: none; border-radius: 18px; cursor: pointer; transition: background-color 0.3s ease; }
+        #gemini-modal-close-btn:hover { background: #5e35b1; }
+
+        #parent_controls {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            color: white;
+            font-family: 'Comic Neue', cursive;
+            z-index: 300;
+            display: none;
+            min-width: 350px;
+        }
+        #parent_controls h3 {
+            font-family: 'Fredoka One', cursive;
+            margin-top: 0;
+            text-align: center;
+            font-size: 24px;
+        }
+        #parent_controls .control-group {
+            margin: 15px 0;
+        }
+        #parent_controls label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        #parent_controls select, #parent_controls input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        #parent_controls button {
+            font-family: 'Fredoka One', cursive;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #ff4081;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        #parent_controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-info-bar">
+        <div id="level-display" class="info-display">Level: 1</div>
+        <div id="score-display" class="info-display">Score: 0</div>
+        <div id="mode-display" class="info-display">Mode: Letters</div>
+        <div id="timer" class="info-display">Time: 15:00</div>
+    </div>
+
+    <div id="welcome">🌟 Press any key to start the magic! 🌟</div>
+    
+    <div id="instruction-container">
+        <div id="instruction"></div>
+        <div id="challenge-progress"></div>
+        <div id="key-image"></div>
+        <button id="gemini-tell-more-btn">✨ Tell Me More!</button>
+    </div>
+
+    <div id="control-panel">
+        <div id="sound-status">🔊 Sound: ON</div>
+        <button class="control-btn" id="pause-btn">⏸️ Pause</button>
+        <button class="control-btn" id="restart-btn">🔄 Restart</button>
+        <button class="control-btn" id="parent-btn">👨‍👩‍👧‍👦 Parent</button>
+    </div>
+    
+    <div id="mode-selector">
+        <button class="mode-btn active" data-mode="letters">🔤 Letters</button>
+        <button class="mode-btn" data-mode="numbers">🔢 Numbers</button>
+        <button class="mode-btn" data-mode="animals">🐾 Animals</button>
+        <button class="mode-btn" data-mode="science">🔬 Science</button>
+        <button class="mode-btn" data-mode="music">🎵 Music</button>
+        <button class="mode-btn" data-mode="math">➕ Math</button>
+        <button class="mode-btn" data-mode="technology">💻 Technology</button>
+    </div>
+
+    <div id="parent_controls">
+        <h3>👨‍👩‍👧‍👦 Parent Controls</h3>
+        <div class="control-group">
+            <label>Learning Mode:</label>
+            <select id="parent_mode_select">
+                <option value="letters">Letters & Alphabet</option>
+                <option value="numbers">Numbers & Counting</option>
+                <option value="animals">Animals & Nature</option>
+                <option value="science">Science & Discovery</option>
+                <option value="music">Music & Sounds</option>
+                <option value="math">Math & Logic</option>
+                <option value="technology">Technology & Innovation</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Difficulty Level:</label>
+            <select id="parent_difficulty">
+                <option value="easy">Easy (2-3 presses)</option>
+                <option value="medium">Medium (3-4 presses)</option>
+                <option value="hard">Hard (4-5 presses)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Session Duration (minutes):</label>
+            <input type="number" id="session_duration" value="15" min="5" max="60">
+        </div>
+        <div class="control-group">
+            <label>Voice Instructions:</label>
+            <select id="voice_speed">
+                <option value="slow">Slow</option>
+                <option value="normal">Normal</option>
+                <option value="fast">Fast</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Voice Type:</label>
+            <select id="voice_type">
+                <option value="dad">Dad's Voice</option>
+                <option value="mom">Mom's Voice</option>
+            </select>
+        </div>
+        <button onclick="applyParentSettings()">✅ Apply Settings</button>
+        <button onclick="hideParentControls()">❌ Close</button>
+        <button onclick="resetProgress()">🔄 Reset Progress</button>
+    </div>
+
+    <div id="gemini-modal">
+        <div id="gemini-modal-content">
+            <h3 id="gemini-modal-title">Learning More...</h3>
+            <p id="gemini-modal-text">Fetching a fun fact...</p>
+            <button id="gemini-modal-close-btn">Close</button>
+        </div>
+    </div>
+    
+    <script>
+        // --- Global Variables ---
+        let lastKey = null, keyCount = 0, shapes = [], instructionTimer = 0, instructionText = '';
+        let welcomeVisible = true, soundOn = true, backgroundHue = 0, stars = [], audioContext = null;
+        let isPaused = false, sessionStartTime = Date.now(), sessionDuration = 15; // in minutes
+        let instructionDelay = 0, lastInstructionTime = 0, encouragementShown = false, challengeStartTime = 0;
+        let timerInterval = null;
+        let isFunFactPlaying = false;
+
+        // Gemini API related
+        let currentGeminiPromptTerm = null, isGeminiLoading = false;
+        let geminiTellMoreBtn, geminiModal, geminiModalTitle, geminiModalText, geminiModalCloseBtn;
+
+        // Scoring and Levels
+        let score = 0;
+        let currentLevelNum = 0;
+        let challengeActive = false;
+        let currentChallenge = {};
+        let scoreDisplay, levelDisplay, instructionDiv, challengeProgressDiv, modeDisplay, keyImageDiv, timerDisplay;
+
+        let currentMode = 'letters';
+        let difficulty = 'easy';
+        let voiceSpeed = 'normal';
+        let voiceType = 'dad'; // Default to dad's voice
+
+        // Speech Synthesis
+        let synth = window.speechSynthesis;
+        let utterance = new SpeechSynthesisUtterance();
+
+        // --- Enhanced Key Data with all letters and numbers ---
+        const keyData = {
+            'A': { emoji: '🍎', word: 'Apple', color: [255, 100, 100], fact: 'Apples float because they are 25% air!' },
+            'B': { emoji: '🦋', word: 'Butterfly', color: [100, 150, 255], fact: 'Butterflies taste with their feet!' },
+            'C': { emoji: '🐱', word: 'Cat', color: [255, 180, 100], fact: 'Cats have 32 muscles in each ear!' },
+            'D': { emoji: '🐶', word: 'Dog', color: [150, 255, 150], fact: 'Dogs can hear sounds four times farther than humans!' },
+            'E': { emoji: '🐘', word: 'Elephant', color: [200, 200, 200], fact: 'Elephants can recognize themselves in mirrors!' },
+            'F': { emoji: '🐠', word: 'Fish', color: [100, 200, 255], fact: 'Some fish can live for over 100 years!' },
+            'G': { emoji: '🦒', word: 'Giraffe', color: [255, 200, 100], fact: 'Giraffes only sleep 2 hours a day!' },
+            'H': { emoji: '❤️', word: 'Heart', color: [255, 100, 150], fact: 'Your heart beats about 100,000 times a day!' },
+            'I': { emoji: '🍦', word: 'Ice cream', color: [255, 200, 255], fact: 'The most popular ice cream flavor is vanilla!' },
+            'J': { emoji: '🕷️', word: 'Jumping spider', color: [100, 100, 200], fact: 'Jumping spiders can jump 50 times their body length!' },
+            'K': { emoji: '🪁', word: 'Kite', color: [200, 100, 255], fact: 'The first kites were made 3,000 years ago!' },
+            'L': { emoji: '🦁', word: 'Lion', color: [255, 180, 50], fact: 'Lions can roar so loud you can hear them 5 miles away!' },
+            'M': { emoji: '🌙', word: 'Moon', color: [200, 200, 255], fact: 'The Moon is moving away from Earth every year!' },
+            'N': { emoji: '🌰', word: 'Nut', color: [150, 100, 50], fact: 'Some nuts can grow into giant trees!' },
+            'O': { emoji: '🐙', word: 'Octopus', color: [255, 100, 200], fact: 'Octopuses have three hearts!' },
+            'P': { emoji: '🐧', word: 'Penguin', color: [100, 100, 100], fact: 'Penguins can swim up to 22 miles per hour!' },
+            'Q': { emoji: '👑', word: 'Queen', color: [255, 215, 0], fact: 'Queen bees can live up to 5 years!' },
+            'R': { emoji: '🌈', word: 'Rainbow', color: [255, 100, 255], fact: 'Rainbows are actually full circles!' },
+            'S': { emoji: '⭐', word: 'Star', color: [255, 255, 100], fact: 'Stars are giant balls of hot gas!' },
+            'T': { emoji: '🐅', word: 'Tiger', color: [255, 150, 0], fact: 'Every tiger has a unique stripe pattern!' },
+            'U': { emoji: '☂️', word: 'Umbrella', color: [100, 150, 200], fact: 'The first umbrellas were used 4,000 years ago!' },
+            'V': { emoji: '🌋', word: 'Volcano', color: [255, 50, 50], fact: 'There are about 1,500 active volcanoes in the world!' },
+            'W': { emoji: '🐋', word: 'Whale', color: [100, 200, 255], fact: 'Blue whales are the largest animals ever!' },
+            'X': { emoji: '🔥', word: 'eXciting', color: [255, 100, 0], fact: 'X marks the spot on treasure maps!' },
+            'Y': { emoji: '🧶', word: 'Yarn', color: [255, 200, 200], fact: 'Yarn can be made from sheep, alpacas, and even plants!' },
+            'Z': { emoji: '🦓', word: 'Zebra', color: [200, 200, 200], fact: 'No two zebras have the same stripe pattern!' },
+            
+            '0': { emoji: '⭕', word: 'Zero', color: [200, 200, 200], fact: 'Zero was invented in India!' },
+            '1': { emoji: '1️⃣', word: 'One', color: [255, 100, 100], fact: 'One is the loneliest number!' },
+            '2': { emoji: '2️⃣', word: 'Two', color: [100, 255, 100], fact: 'Two is the only even prime number!' },
+            '3': { emoji: '3️⃣', word: 'Three', color: [100, 100, 255], fact: 'Three is considered a lucky number!' },
+            '4': { emoji: '4️⃣', word: 'Four', color: [255, 255, 100], fact: 'Four-leaf clovers are very rare!' },
+            '5': { emoji: '5️⃣', word: 'Five', color: [255, 100, 255], fact: 'We have five fingers on each hand!' },
+            '6': { emoji: '6️⃣', word: 'Six', color: [100, 255, 255], fact: 'Snowflakes always have six sides!' },
+            '7': { emoji: '7️⃣', word: 'Seven', color: [255, 150, 100], fact: 'Seven is considered very lucky!' },
+            '8': { emoji: '8️⃣', word: 'Eight', color: [150, 255, 150], fact: 'Eight turned sideways is infinity!' },
+            '9': { emoji: '9️⃣', word: 'Nine', color: [150, 150, 255], fact: 'Cats have nine lives in stories!' }
+        };
+
+        // Mode-specific key data
+        const modeKeyData = {
+            animals: {
+                'A': { emoji: '🐊', word: 'Alligator', color: [100, 150, 100], fact: 'Alligators can hold their breath for an hour!' },
+                'B': { emoji: '🐻', word: 'Bear', color: [150, 100, 50], fact: 'Bears can run up to 35 miles per hour!' },
+                'C': { emoji: '🐄', word: 'Cow', color: [255, 200, 200], fact: 'Cows have best friends!' },
+                'D': { emoji: '🐶', word: 'Dog', color: [255, 255, 100], fact: 'Dogs can hear sounds four times farther than humans!' },
+                'E': { emoji: '🦅', word: 'Eagle', color: [100, 50, 0], fact: 'Eagles can see 8 times better than humans!' }
+            },
+            science: {
+                'A': { emoji: '⚛️', word: 'Atom', color: [100, 200, 255], fact: 'Atoms are the building blocks of everything!' },
+                'B': { emoji: '🧠', word: 'Brain', color: [255, 150, 150], fact: 'Your brain uses 20% of your body\'s energy!' },
+                'C': { emoji: '☁️', word: 'Cloud', color: [200, 200, 255], fact: 'Clouds can weigh as much as elephants!' },
+                'D': { emoji: '🌍', word: 'Earth', color: [100, 150, 255], fact: 'Earth is the only planet with liquid water!' },
+                'E': { emoji: '⚡', word: 'Electricity', color: [255, 255, 100], fact: 'Lightning is 5 times hotter than the sun!' }
+            },
+            music: {
+                'A': { emoji: '🎸', word: 'Amplifier', color: [255, 100, 100], fact: 'Sound travels faster through water than air!' },
+                'B': { emoji: '🎵', word: 'Beat', color: [100, 255, 100], fact: 'Music can make plants grow faster!' },
+                'C': { emoji: '🎺', word: 'Clarinet', color: [150, 100, 200], fact: 'The clarinet has over 20 parts!' },
+                'D': { emoji: '🥁', word: 'Drum', color: [200, 100, 50], fact: 'Drums are the oldest musical instruments!' },
+                'E': { emoji: '🎧', word: 'Earphones', color: [100, 100, 200], fact: 'Our ears can hear over 400,000 sounds!' }
+            },
+            math: {
+                'A': { emoji: '➕', word: 'Addition', color: [255, 100, 100], fact: 'Adding two even numbers always gives an even number!' },
+                'B': { emoji: '➖', word: 'Subtraction', color: [100, 255, 100], fact: 'Subtracting an odd from an even gives an odd number!' },
+                'C': { emoji: '✖️', word: 'Multiplication', color: [100, 100, 255], fact: 'Multiplying by 0 always gives 0!' },
+                'D': { emoji: '➗', word: 'Division', color: [255, 255, 100], fact: 'You can\'t divide any number by 0!' },
+                'E': { emoji: '📐', word: 'Equation', color: [255, 100, 255], fact: 'Equations help us solve problems!' }
+            },
+            technology: {
+                'A': { emoji: '🤖', word: 'Android', color: [100, 200, 200], fact: 'Android powers most smartphones!' },
+                'B': { emoji: '💻', word: 'Browser', color: [200, 100, 255], fact: 'Browsers let us explore the internet!' },
+                'C': { emoji: '⌨️', word: 'Computer', color: [255, 200, 100], fact: 'The first computer weighed over 27 tons!' },
+                'D': { emoji: '💾', word: 'Disk', color: [100, 150, 255], fact: 'Floppy disks were used to store data!' },
+                'E': { emoji: '📧', word: 'Email', color: [255, 100, 150], fact: 'The first email was sent in 1971!' }
+            }
+        };
+
+        // --- Enhanced Levels for Each Mode ---
+        const gameLevels = {
+            letters: [
+                { keyToPress: 'A', targetPresses: 2, baseInstruction: "Press 'A' for Apple! 🍎", voiceInstruction: "Press the letter A for Apple, two times.", points: 10 },
+                { keyToPress: 'B', targetPresses: 2, baseInstruction: "Press 'B' for Butterfly! 🦋", voiceInstruction: "Now press B for Butterfly, two times.", points: 10 },
+                { keyToPress: 'C', targetPresses: 3, baseInstruction: "Press 'C' for Cat! 🐱", voiceInstruction: "Press C for Cat, three times.", points: 15 },
+                { keyToPress: 'D', targetPresses: 3, baseInstruction: "Press 'D' for Dog! 🐶", voiceInstruction: "Press D for Dog, three times.", points: 15 },
+                { keyToPress: 'E', targetPresses: 2, baseInstruction: "Press 'E' for Elephant! 🐘", voiceInstruction: "Press E for Elephant, two times.", points: 10 },
+                { keyToPress: 'F', targetPresses: 4, baseInstruction: "Press 'F' for Fish! 🐠", voiceInstruction: "Press F for Fish, four times.", points: 20 },
+                { keyToPress: 'G', targetPresses: 3, baseInstruction: "Press 'G' for Giraffe! 🦒", voiceInstruction: "Press G for Giraffe, three times.", points: 15 },
+                { keyToPress: 'H', targetPresses: 2, baseInstruction: "Press 'H' for Heart! ❤️", voiceInstruction: "Press H for Heart, two times.", points: 10 },
+                { keyToPress: 'I', targetPresses: 3, baseInstruction: "Press 'I' for Ice cream! 🍦", voiceInstruction: "Press I for Ice cream, three times.", points: 15 },
+                { keyToPress: 'J', targetPresses: 4, baseInstruction: "Press 'J' for Jumping spider! 🕷️", voiceInstruction: "Press J for Jumping spider, four times.", points: 20 }
+            ],
+            numbers: [
+                { keyToPress: '1', targetPresses: 1, baseInstruction: "Press '1' one time! 1️⃣", voiceInstruction: "Press the number 1, one time.", points: 5 },
+                { keyToPress: '2', targetPresses: 2, baseInstruction: "Press '2' two times! 2️⃣", voiceInstruction: "Press the number 2, two times.", points: 10 },
+                { keyToPress: '3', targetPresses: 3, baseInstruction: "Press '3' three times! 3️⃣", voiceInstruction: "Press the number 3, three times.", points: 15 },
+                { keyToPress: '4', targetPresses: 2, baseInstruction: "Press '4' two times! 4️⃣", voiceInstruction: "Press the number 4, two times.", points: 10 },
+                { keyToPress: '5', targetPresses: 3, baseInstruction: "Press '5' three times! 5️⃣", voiceInstruction: "Press the number 5, three times.", points: 15 }
+            ],
+            animals: [
+                { keyToPress: 'A', targetPresses: 2, baseInstruction: "Press 'A' for Alligator! 🐊", voiceInstruction: "Press A for Alligator, two times.", points: 10 },
+                { keyToPress: 'B', targetPresses: 2, baseInstruction: "Press 'B' for Bear! 🐻", voiceInstruction: "Press B for Bear, two times.", points: 10 },
+                { keyToPress: 'C', targetPresses: 3, baseInstruction: "Press 'C' for Cow! 🐄", voiceInstruction: "Press C for Cow, three times.", points: 15 },
+                { keyToPress: 'D', targetPresses: 2, baseInstruction: "Press 'D' for Dog! 🐶", voiceInstruction: "Press D for Dog, two times.", points: 10 },
+                { keyToPress: 'E', targetPresses: 3, baseInstruction: "Press 'E' for Eagle! 🦅", voiceInstruction: "Press E for Eagle, three times.", points: 15 }
+            ],
+            science: [
+                { keyToPress: 'A', targetPresses: 2, baseInstruction: "Press 'A' for Atom! ⚛️", voiceInstruction: "Press A for Atom, two times.", points: 10 },
+                { keyToPress: 'B', targetPresses: 2, baseInstruction: "Press 'B' for Brain! 🧠", voiceInstruction: "Press B for Brain, two times.", points: 10 },
+                { keyToPress: 'C', targetPresses: 3, baseInstruction: "Press 'C' for Cloud! ☁️", voiceInstruction: "Press C for Cloud, three times.", points: 15 },
+                { keyToPress: 'D', targetPresses: 2, baseInstruction: "Press 'D' for Earth! 🌍", voiceInstruction: "Press D for Earth, two times.", points: 10 },
+                { keyToPress: 'E', targetPresses: 3, baseInstruction: "Press 'E' for Electricity! ⚡", voiceInstruction: "Press E for Electricity, three times.", points: 15 }
+            ],
+            music: [
+                { keyToPress: 'A', targetPresses: 2, baseInstruction: "Press 'A' for Amplifier! 🎸", voiceInstruction: "Press A for Amplifier, two times.", points: 10 },
+                { keyToPress: 'B', targetPresses: 2, baseInstruction: "Press 'B' for Beat! 🎵", voiceInstruction: "Press B for Beat, two times.", points: 10 },
+                { keyToPress: 'C', targetPresses: 3, baseInstruction: "Press 'C' for Clarinet! 🎺", voiceInstruction: "Press C for Clarinet, three times.", points: 15 },
+                { keyToPress: 'D', targetPresses: 2, baseInstruction: "Press 'D' for Drum! 🥁", voiceInstruction: "Press D for Drum, two times.", points: 10 },
+                { keyToPress: 'E', targetPresses: 3, baseInstruction: "Press 'E' for Earphones! 🎧", voiceInstruction: "Press E for Earphones, three times.", points: 15 }
+            ],
+            math: [
+                { keyToPress: 'A', targetPresses: 2, baseInstruction: "Press 'A' for Addition! ➕", voiceInstruction: "Press A for Addition, two times.", points: 10 },
+                { keyToPress: 'B', targetPresses: 2, baseInstruction: "Press 'B' for Subtraction! ➖", voiceInstruction: "Press B for Subtraction, two times.", points: 10 },
+                { keyToPress: 'C', targetPresses: 3, baseInstruction: "Press 'C' for Multiplication! ✖️", voiceInstruction: "Press C for Multiplication, three times.", points: 15 },
+                { keyToPress: 'D', targetPresses: 2, baseInstruction: "Press 'D' for Division! ➗", voiceInstruction: "Press D for Division, two times.", points: 10 },
+                { keyToPress: 'E', targetPresses: 3, baseInstruction: "Press 'E' for Equation! 📐", voiceInstruction: "Press E for Equation, three times.", points: 15 }
+            ],
+            technology: [
+                { keyToPress: 'A', targetPresses: 2, baseInstruction: "Press 'A' for Android! 🤖", voiceInstruction: "Press A for Android, two times.", points: 10 },
+                { keyToPress: 'B', targetPresses: 2, baseInstruction: "Press 'B' for Browser! 💻", voiceInstruction: "Press B for Browser, two times.", points: 10 },
+                { keyToPress: 'C', targetPresses: 3, baseInstruction: "Press 'C' for Computer! ⌨️", voiceInstruction: "Press C for Computer, three times.", points: 15 },
+                { keyToPress: 'D', targetPresses: 2, baseInstruction: "Press 'D' for Disk! 💾", voiceInstruction: "Press D for Disk, two times.", points: 10 },
+                { keyToPress: 'E', targetPresses: 3, baseInstruction: "Press 'E' for Email! 📧", voiceInstruction: "Press E for Email, three times.", points: 15 }
+            ]
+        };
+
+        // --- p5.js Setup ---
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            textAlign(CENTER, CENTER);
+            textFont('Comic Neue');
+            initializeStars();
+            initializeAudio();
+            initializeDOM();
+            initializeModeSelector();
+            startTimer();
+            frameRate(60);
+            
+            // Ensure voices are loaded before starting
+            loadVoices();
+        }
+
+        // --- Load Voices with a Promise ---
+        function loadVoices() {
+            return new Promise((resolve) => {
+                let voices = synth.getVoices();
+                if (voices.length > 0) {
+                    logVoices(voices);
+                    resolve(voices);
+                } else {
+                    synth.onvoiceschanged = () => {
+                        voices = synth.getVoices();
+                        logVoices(voices);
+                        resolve(voices);
+                    };
+                }
+            });
+        }
+
+        // --- Log Available Voices ---
+        function logVoices(voices) {
+            console.log("Available voices:");
+            voices.forEach((voice, index) => {
+                console.log(`${index}: ${voice.name} (${voice.lang}) ${voice.default ? '[default]' : ''}`);
+            });
+            if (voices.length === 0) {
+                console.log("No voices available. Speech synthesis may not work on this browser.");
+            }
+        }
+
+        // --- Initialize DOM Elements ---
+        function initializeDOM() {
+            scoreDisplay = select('#score-display');
+            levelDisplay = select('#level-display');
+            instructionDiv = select('#instruction');
+            challengeProgressDiv = select('#challenge-progress');
+            modeDisplay = select('#mode-display');
+            keyImageDiv = select('#key-image');
+            timerDisplay = select('#timer');
+            
+            geminiTellMoreBtn = select('#gemini-tell-more-btn');
+            geminiModal = select('#gemini-modal');
+            geminiModalTitle = select('#gemini-modal-title');
+            geminiModalText = select('#gemini-modal-text');
+            geminiModalCloseBtn = select('#gemini-modal-close-btn');
+            
+            geminiTellMoreBtn.mousePressed(showTellMore);
+            geminiModalCloseBtn.mousePressed(closeGeminiModal);
+            
+            select('#pause-btn').mousePressed(togglePause);
+            select('#restart-btn').mousePressed(restartGame);
+            select('#parent-btn').mousePressed(showParentControls);
+        }
+
+        // --- Initialize Stars ---
+        function initializeStars() {
+            for (let i = 0; i < 50; i++) {
+                stars.push({
+                    x: random(width),
+                    y: random(height),
+                    size: random(2, 5),
+                    alpha: random(100, 255)
+                });
+            }
+        }
+
+        // --- Initialize Audio ---
+        function initializeAudio() {
+            audioContext = getAudioContext();
+            utterance.onend = () => {
+                if (!isPaused) {
+                    instructionDelay = 60; // 1-second pause after instruction
+                    lastInstructionTime = frameCount;
+                    if (isFunFactPlaying) {
+                        isFunFactPlaying = false;
+                        startNewChallenge();
+                    }
+                }
+            };
+        }
+
+        // --- Initialize Mode Selector ---
+        function initializeModeSelector() {
+            let modeButtons = selectAll('.mode-btn');
+            for (let btn of modeButtons) {
+                btn.mousePressed(() => {
+                    let newMode = btn.attribute('data-mode');
+                    if (newMode !== currentMode) {
+                        currentMode = newMode;
+                        modeButtons.forEach(b => b.removeClass('active'));
+                        btn.addClass('active');
+                        modeDisplay.html(`Mode: ${newMode.charAt(0).toUpperCase() + newMode.slice(1)}`);
+                        resetChallenge();
+                        startNewChallenge();
+                    }
+                });
+            }
+        }
+
+        // --- Start Timer ---
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                let elapsed = (Date.now() - sessionStartTime) / 1000 / 60;
+                let remaining = Math.max(0, sessionDuration - elapsed);
+                let minutes = Math.floor(remaining);
+                let seconds = Math.floor((remaining - minutes) * 60);
+                timerDisplay.html(`Time: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+                if (remaining <= 0) {
+                    endSession();
+                }
+            }, 1000);
+        }
+
+        // --- p5.js Draw ---
+        function draw() {
+            if (isPaused) return;
+            
+            background(lerpColor(color('#ff9a9e'), color('#a8edea'), sin(frameCount * 0.01)));
+            drawStars();
+            drawShapes();
+            updateInstruction();
+            spawnFloatingEmojis();
+            spawnSparkles();
+            
+            if (instructionDelay > 0) {
+                instructionDelay--;
+                if (instructionDelay === 0 && challengeActive && keyCount === 0 && !encouragementShown && frameCount - lastInstructionTime > 120) {
+                    encourageChild();
+                }
+            }
+            
+            if (challengeActive && Date.now() - challengeStartTime > 60000 && !encouragementShown) {
+                encourageChild();
+            }
+            
+            if (challengeActive && Date.now() - challengeStartTime > 120000) {
+                moveToNextOrAlternative();
+            }
+        }
+
+        // --- Draw Stars ---
+        function drawStars() {
+            stars.forEach(star => {
+                fill(255, 255, 255, star.alpha);
+                noStroke();
+                ellipse(star.x, star.y, star.size, star.size);
+                star.alpha = 150 + 105 * sin(frameCount * 0.05 + star.x);
+            });
+        }
+
+        // --- Draw Shapes ---
+        function drawShapes() {
+            for (let i = shapes.length - 1; i >= 0; i--) {
+                let shape = shapes[i];
+                fill(...shape.color, shape.alpha);
+                noStroke();
+                
+                push();
+                translate(shape.x, shape.y);
+                rotate(shape.rotation);
+                if (shape.type === 'circle') {
+                    ellipse(0, 0, shape.size, shape.size);
+                } else if (shape.type === 'rect') {
+                    rectMode(CENTER);
+                    rect(0, 0, shape.size, shape.size);
+                }
+                pop();
+                
+                shape.y += shape.speed;
+                shape.rotation += shape.rotationSpeed;
+                shape.alpha -= 0.5;
+                
+                if (shape.y > height + shape.size || shape.alpha <= 0) {
+                    shapes.splice(i, 1);
+                }
+            }
+        }
+
+        // --- Update Instruction ---
+        function updateInstruction() {
+            if (instructionText !== instructionDiv.html()) {
+                instructionDiv.html(instructionText);
+            }
+            
+            // Show key image and progress during active challenges or when showing fun facts
+            if (challengeActive || instructionText.includes("Fun fact:")) {
+                // Show key image
+                if (keyImageDiv) {
+                    let data = currentMode in modeKeyData && currentChallenge.keyToPress in modeKeyData[currentMode] ? 
+                               modeKeyData[currentMode][currentChallenge.keyToPress] : 
+                               keyData[currentChallenge.keyToPress];
+                    keyImageDiv.html(`
+                        <div class="letter">${currentChallenge.keyToPress}</div>
+                        <div class="emoji">${data.emoji}</div>
+                    `);
+                }
+
+                // Show progress only during active challenges, not during fun facts
+                if (challengeActive && !instructionText.includes("Fun fact:")) {
+                    if (!challengeProgressDiv.hasClass('show')) {
+                        challengeProgressDiv.addClass('show');
+                    }
+                    challengeProgressDiv.html(`Pressed ${keyCount}/${currentChallenge.targetPresses}`);
+                } else {
+                    if (challengeProgressDiv.hasClass('show')) {
+                        challengeProgressDiv.removeClass('show');
+                    }
+                }
+            } else {
+                if (challengeProgressDiv.hasClass('show')) {
+                    challengeProgressDiv.removeClass('show');
+                }
+                if (keyImageDiv) {
+                    keyImageDiv.html('');
+                }
+            }
+        }
+
+        // --- Spawn Floating Emojis ---
+        function spawnFloatingEmojis() {
+            if (frameCount % 120 === 0) {
+                let emojiDiv = createDiv(random(['🌟', '✨', '🎉', '🐾', '🎈']));
+                emojiDiv.class('floating-emoji');
+                emojiDiv.position(random(width), random(height));
+            }
+        }
+
+        // --- Spawn Sparkles ---
+        function spawnSparkles() {
+            if (frameCount % 30 === 0) {
+                let sparkle = createDiv('');
+                sparkle.class('sparkle');
+                sparkle.position(random(width), random(height));
+            }
+        }
+
+        // --- Key Pressed ---
+        function keyPressed() {
+            if (welcomeVisible) {
+                welcomeVisible = false;
+                select('#welcome').style('display', 'none');
+                startNewChallenge();
+                return;
+            }
+            
+            if (isPaused) return;
+            
+            lastKey = key.toUpperCase();
+            if (challengeActive && lastKey === currentChallenge.keyToPress) {
+                keyCount++;
+                addShape();
+                if (soundOn) {
+                    playSound();
+                }
+                
+                if (keyCount >= currentChallenge.targetPresses) {
+                    completeChallenge();
+                }
+            }
+        }
+
+        // --- Add Shape ---
+        function addShape() {
+            let data = currentMode in modeKeyData && lastKey in modeKeyData[currentMode] ? modeKeyData[currentMode][lastKey] : keyData[lastKey];
+            shapes.push({
+                x: random(width),
+                y: -50,
+                size: random(50, 100),
+                color: data.color,
+                alpha: 255,
+                speed: random(1, 3),
+                rotation: 0,
+                rotationSpeed: random(-0.05, 0.05),
+                type: random(['circle', 'rect'])
+            });
+        }
+
+        // --- Play Sound ---
+        function playSound() {
+            let osc = audioContext.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(random(200, 800), audioContext.currentTime);
+            osc.connect(audioContext.destination);
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.1);
+        }
+
+        // --- Start New Challenge ---
+        function startNewChallenge() {
+            if (currentLevelNum >= gameLevels[currentMode].length) {
+                currentLevelNum = 0;
+            }
+            
+            currentChallenge = gameLevels[currentMode][currentLevelNum];
+            keyCount = 0;
+            challengeActive = true;
+            encouragementShown = false;
+            challengeStartTime = Date.now();
+            
+            instructionText = currentChallenge.baseInstruction;
+            instructionTimer = 300;
+            
+            if (soundOn) {
+                utterance.text = currentChallenge.voiceInstruction;
+                setVoiceProperties();
+                synth.cancel(); // Cancel any previous speech
+                synth.speak(utterance);
+            }
+        }
+
+        // --- Complete Challenge ---
+        function completeChallenge() {
+            challengeActive = false;
+            score += currentChallenge.points;
+            scoreDisplay.html(`Score: ${score}`);
+            modeDisplay.style('color', scoreDisplay.style('color'));
+            currentLevelNum++;
+            levelDisplay.html(`Level: ${currentLevelNum + 1}`);
+            
+            instructionText = "Good job! You did it! 🎉";
+            instructionTimer = 120;
+            if (soundOn) {
+                utterance.text = "Good job! You did it!";
+                setVoiceProperties();
+                synth.cancel();
+                synth.speak(utterance);
+            }
+            
+            showTellMoreFact();
+        }
+
+        // --- Encourage Child ---
+        function encourageChild() {
+            if (!encouragementShown) {
+                encouragementShown = true;
+                instructionText = "You can do it! " + currentChallenge.baseInstruction;
+                instructionTimer = 180;
+                if (soundOn) {
+                    utterance.text = "You can do it! " + currentChallenge.voiceInstruction;
+                    setVoiceProperties();
+                    synth.cancel();
+                    synth.speak(utterance);
+                }
+            }
+        }
+
+        // --- Move to Next or Alternative ---
+        function moveToNextOrAlternative() {
+            if (currentLevelNum + 1 < gameLevels[currentMode].length) {
+                currentLevelNum++;
+            } else {
+                currentLevelNum = 0;
+            }
+            resetChallenge();
+            startNewChallenge();
+        }
+
+        // --- Show Tell Me More Fact ---
+        function showTellMoreFact() {
+            let data = currentMode in modeKeyData && lastKey in modeKeyData[currentMode] ? modeKeyData[currentMode][lastKey] : keyData[lastKey];
+            instructionText = `Fun fact: ${data.fact}`;
+            instructionTimer = 180;
+            if (soundOn) {
+                isFunFactPlaying = true;
+                utterance.text = `Fun fact: ${data.fact}`;
+                setVoiceProperties();
+                synth.cancel(); // Ensure previous speech is stopped
+                synth.speak(utterance); // Speak the fun fact
+            } else {
+                setTimeout(() => {
+                    startNewChallenge();
+                }, 4000);
+            }
+        }
+
+        // --- Set Voice Properties (Speed and Type) ---
+        function setVoiceProperties() {
+            // Set voice speed
+            if (voiceSpeed === 'slow') {
+                utterance.rate = 0.8;
+            } else if (voiceSpeed === 'fast') {
+                utterance.rate = 1.2;
+            } else {
+                utterance.rate = 1.0;
+            }
+
+            // Set voice type (male or female)
+            let voices = synth.getVoices();
+            let selectedVoice = null;
+
+            if (voiceType === 'dad') {
+                // Look for a male voice
+                selectedVoice = voices.find(voice => 
+                    voice.name.toLowerCase().includes('male') || 
+                    voice.name.includes('David') || 
+                    voice.name.includes('Mark') || 
+                    voice.name.includes('James') || 
+                    voice.name.includes('Alex') || 
+                    voice.name.includes('Daniel') ||
+                    voice.gender === 'male' // Some systems may support gender property
+                );
+                if (!selectedVoice) {
+                    console.log("No male voice found for Dad's Voice. Falling back to default.");
+                }
+            } else if (voiceType === 'mom') {
+                // Look for a female voice
+                selectedVoice = voices.find(voice => 
+                    voice.name.toLowerCase().includes('female') || 
+                    voice.name.includes('Samantha') || 
+                    voice.name.includes('Victoria') || 
+                    voice.name.includes('Kate') || 
+                    voice.name.includes('Susan') || 
+                    voice.name.includes('Emily') ||
+                    voice.gender === 'female' // Some systems may support gender property
+                );
+                if (!selectedVoice) {
+                    console.log("No female voice found for Mom's Voice. Falling back to default.");
+                    instructionText = "Sorry, no female voice available. Using default voice.";
+                    instructionTimer = 180;
+                }
+            }
+
+            // Fallback to default if no matching voice is found
+            if (!selectedVoice) {
+                selectedVoice = voices.find(voice => voice.default) || voices[0];
+            }
+
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+                console.log(`Selected voice: ${selectedVoice.name}`);
+            } else {
+                console.log("No voices available. Speech synthesis may not work.");
+                instructionText = "Sorry, no voices available in this browser.";
+                instructionTimer = 180;
+            }
+        }
+
+        // --- Gemini Tell More ---
+        function showTellMore() {
+            if (isGeminiLoading) return;
+            
+            isGeminiLoading = true;
+            geminiModalTitle.html('Learning More...');
+            geminiModalText.html('Fetching a fun fact...');
+            geminiModal.addClass('show');
+            
+            setTimeout(() => {
+                let data = currentMode in modeKeyData && lastKey in modeKeyData[currentMode] ? modeKeyData[currentMode][lastKey] : keyData[lastKey];
+                geminiModalTitle.html(`Fun Fact About ${data.word}!`);
+                geminiModalText.html(data.fact);
+                isGeminiLoading = false;
+            }, 1000);
+        }
+
+        // --- Close Gemini Modal ---
+        function closeGeminiModal() {
+            geminiModal.removeClass('show');
+        }
+
+        // --- Toggle Pause ---
+        function togglePause() {
+            isPaused = !isPaused;
+            select('#pause-btn').html(isPaused ? '▶️ Resume' : '⏸️ Pause');
+            if (isPaused) {
+                synth.cancel();
+                if (timerInterval) clearInterval(timerInterval);
+            } else {
+                sessionStartTime = Date.now() - ((sessionDuration * 60 * 1000) - (parseInt(timerDisplay.html().split(':')[0]) * 60 + parseInt(timerDisplay.html().split(':')[1])) * 1000);
+                startTimer();
+                if (challengeActive) {
+                    synth.cancel();
+                    synth.speak(utterance);
+                }
+            }
+        }
+
+        // --- Restart Game ---
+        function restartGame() {
+            score = 0;
+            currentLevelNum = 0;
+            scoreDisplay.html(`Score: ${score}`);
+            levelDisplay.html(`Level: ${currentLevelNum + 1}`);
+            sessionStartTime = Date.now();
+            resetChallenge();
+            startTimer();
+            startNewChallenge();
+        }
+
+        // --- Reset Challenge ---
+        function resetChallenge() {
+            challengeActive = false;
+            keyCount = 0;
+            instructionTimer = 0;
+            encouragementShown = false;
+            geminiTellMoreBtn.removeClass('show');
+            synth.cancel();
+        }
+
+        // --- End Session ---
+        function endSession() {
+            isPaused = true;
+            challengeActive = false;
+            instructionText = 'Session Ended! Great job! 🌟';
+            instructionTimer = 300;
+            geminiTellMoreBtn.removeClass('show');
+            synth.cancel();
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        // --- Show Parent Controls ---
+        function showParentControls() {
+            select('#parent_controls').style('display', 'block');
+        }
+
+        // --- Hide Parent Controls ---
+        function hideParentControls() {
+            select('#parent_controls').style('display', 'none');
+        }
+
+        // --- Apply Parent Settings ---
+        function applyParentSettings() {
+            currentMode = select('#parent_mode_select').value();
+            difficulty = select('#parent_difficulty').value();
+            sessionDuration = parseInt(select('#session_duration').value());
+            voiceSpeed = select('#voice_speed').value();
+            voiceType = select('#voice_type').value();
+            
+            let modeButtons = selectAll('.mode-btn');
+            modeButtons.forEach(btn => {
+                if (btn.attribute('data-mode') === currentMode) {
+                    btn.addClass('active');
+                } else {
+                    btn.removeClass('active');
+                }
+            });
+            
+            modeDisplay.html(`Mode: ${currentMode.charAt(0).toUpperCase() + currentMode.slice(1)}`);
+            sessionStartTime = Date.now();
+            resetChallenge();
+            startTimer();
+            startNewChallenge();
+            hideParentControls();
+        }
+
+        // --- Reset Progress ---
+        function resetProgress() {
+            restartGame();
+            hideParentControls();
+        }
+
+        // --- Window Resized ---
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>
